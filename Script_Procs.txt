@@ -1,0 +1,1050 @@
+use BD_PROCESSES
+go
+
+CREATE PROC p_RetornarUsuarioLogin  
+@Login VARCHAR(10)  
+  
+AS  
+BEGIN
+
+	SELECT *  
+	FROM tbl_Usuarios  
+	WHERE [Login] = @Login
+
+END
+
+----------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+CREATE PROC p_RetornarUsuarioAdmin
+@Login VARCHAR(10)
+
+AS 
+BEGIN
+
+	SELECT COUNT(*)
+	FROM TBL_USUARIOS
+	WHERE [Login] = @Login
+	AND [Admin] = 1
+END
+
+--------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+CREATE PROC p_CadastrarUsuarios
+@Nome VARCHAR(50),
+@Login VARCHAR(10),
+@Senha VARCHAR(6),
+@Email VARCHAR(50),
+@Admin bit,
+@retorno INT OUTPUT
+
+AS 
+BEGIN
+
+	INSERT TBL_USUARIOS (Nome, [Login], Senha, Email, [Admin])
+	VALUES (@Nome, @Login, @Senha, @Email, @Admin)
+	
+	IF @@ROWCOUNT > 0
+		SET @retorno = 1
+	ELSE
+		SET @retorno = 0
+
+	RETURN @retorno
+
+END
+
+-------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+
+ALTER PROC p_RetornarSenhaAlteracao
+@Login VARCHAR(10),
+@Senha VARCHAR(6),
+@NovaSenha VARCHAR(6),
+@retorno INT OUTPUT
+
+AS
+BEGIN
+	
+	UPDATE TBL_USUARIOS
+	SET Senha = @NovaSenha
+	WHERE [Login] = @Login
+	AND Senha = @Senha
+	
+	IF @@ROWCOUNT > 0
+		SET @retorno = 1
+	ELSE
+		SET @retorno = 0
+	
+	RETURN @retorno
+	
+END
+
+---------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+ALTER PROC p_VerificarLoginEmailJaCadastrado
+@Login VARCHAR(10),
+@Email VARCHAR(50),
+@retorno VARCHAR(10) OUTPUT
+
+AS
+
+BEGIN	
+	
+	SET NOCOUNT ON
+	
+	IF EXISTS(SELECT * FROM TBL_USUARIOS WHERE [Login] = @Login)
+		BEGIN	
+			SELECT 'LOGIN'
+			RETURN 0
+		END
+	
+	IF EXISTS(SELECT * FROM TBL_USUARIOS WHERE Email = @Email)
+		BEGIN	
+			SELECT 'EMAIL'
+			RETURN 0
+		END
+	ELSE
+		BEGIN
+			SELECT 'NENHUM'
+			RETURN 0
+		END
+							
+END
+
+--------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+CREATE PROC p_CadastrarAdvogados
+@NumOAB VARCHAR(6),
+@Nome VARCHAR(50),
+@Escritorio VARCHAR(50) = NULL,
+@Email VARCHAR(50), 
+@TelFixo VARCHAR(13) = NULL,
+@TelCel VARCHAR(13) = NULL,
+@retorno INT OUTPUT
+
+AS
+BEGIN
+
+	INSERT TBL_ADVOGADOS (nr_OAB, Nome, Escritorio, Email, TelFixo, TelCel)
+	VALUES (@NumOAB, @Nome, @Escritorio, @Email, @TelFixo, @TelCel)
+	
+	IF @@ROWCOUNT > 0
+		SET @retorno = 1
+	ELSE
+		SET @retorno = 0
+	
+	RETURN @retorno 
+
+END	
+
+---------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+ALTER PROC p_RetornarOABCasdastrado
+@nr_OAB VARCHAR(6),
+@retorno VARCHAR(10) OUTPUT
+
+AS
+DECLARE @i INT
+
+BEGIN
+
+	SELECT @i = COUNT(*)
+	FROM TBL_ADVOGADOS
+	WHERE nr_OAB = @nr_OAB
+	
+	IF @i > 0
+		BEGIN
+			SELECT 'EXISTE'
+			RETURN 0
+		END
+	ELSE
+		BEGIN
+			SELECT ''
+			RETURN 0
+		END 
+
+END
+
+-----------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+ALTER PROC p_CadastrarForo
+@Codigo CHAR(4),
+@Nome VARCHAR(100),
+@retorno INT OUTPUT
+
+AS
+
+BEGIN
+	
+	INSERT TBL_FORO (Codigo, Nome)
+	VALUES (@Codigo, @Nome)
+	
+	IF @@ROWCOUNT > 0
+		SET @retorno = 1
+	ELSE
+		SET @retorno = 0
+
+
+	RETURN @retorno 
+
+END
+
+----------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+ALTER PROC p_PesquisarUsuarios  
+@Filtro VARCHAR(10),   
+@ValorFiltro VARCHAR(100)  
+  
+AS  
+  
+DECLARE @Comm VARCHAR(200)  
+BEGIN  
+  
+	SET @Comm =  
+	'SELECT  
+	Nome,  
+	[Login],  
+	Email,  
+	[Admin]  
+	FROM TBL_USUARIOS'  
+
+	IF @Filtro <> ''
+		BEGIN  
+			SET @Comm =  
+			CASE @Filtro  
+			WHEN 'Nome' THEN @Comm + ' Where Nome LIKE ''%' +   @ValorFiltro + '%'''  
+			WHEN 'Login' THEN @Comm + ' Where Login LIKE ''%' +   @ValorFiltro + '%'''  
+			WHEN 'Email' THEN @Comm + ' Where Email LIKE ''%' +   @ValorFiltro + '%'''  
+		END
+	END  
+   
+	EXEC (@Comm)  
+   
+END
+
+----------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+ALTER PROC p_BuscarUsuarioAlteracao
+@Login VARCHAR(10)
+
+AS
+BEGIN
+	
+	SELECT 
+		Nome,
+		[Login],
+		Senha,
+		Email,
+		[Admin]
+	FROM TBL_USUARIOS
+	WHERE [Login] = @Login
+
+END
+
+----------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+CREATE PROC p_AtualizarDadosUsuario
+@Login VARCHAR(10),
+@Nome VARCHAR(50), 
+@Email VARCHAR(50),
+@Tipo BIT,
+@retorno INT OUTPUT
+
+AS 
+
+BEGIN
+
+	UPDATE TBL_USUARIOS
+	SET Nome = @Nome,
+		Email = @Email,
+		Admin = @Tipo
+	WHERE [Login] = @Login
+	
+	IF @@ROWCOUNT > 0
+		SET @retorno = 1
+	ELSE 
+		SET @retorno = 0
+
+	
+	RETURN @retorno 
+	
+END
+
+---------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+CREATE PROC p_RetornarUsuarioJaLogado  
+@Login VARCHAR(10)  
+  
+AS  
+BEGIN  
+  
+ SELECT COUNT(*)  
+ FROM TBL_USUARIOS_LOGADOS  
+ WHERE [Login] = @Login  
+    
+END
+
+------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+CREATE PROC p_InserirUsuarioLogado  
+@Login VARCHAR(10)  
+  
+AS  
+BEGIN  
+  
+ INSERT TBL_USUARIOS_LOGADOS ([Login])  
+ VALUES (@Login)  
+   
+END
+
+-------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+CREATE PROC p_DeletarUsuarioLogon
+@Login VARCHAR(10)
+
+AS 
+BEGIN
+
+	DELETE TBL_USUARIOS_LOGADOS
+	WHERE [Login] = @Login
+
+END
+
+------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+ALTER PROC p_PesquisarForo
+@Filtro VARCHAR(10),
+@ValorFiltro VARCHAR(100)
+
+AS
+
+DECLARE @Comm as VARCHAR(200)
+BEGIN
+
+	SET @Comm = 'SELECT 
+		     	Codigo, 
+			Nome
+		     FROM TBL_FORO'
+	
+	IF @Filtro <> '' AND @Filtro <> 'Nenhum'
+	BEGIN
+		SET @Comm = @Comm + 
+		CASE @Filtro 
+			WHEN 'Nome' THEN ' WHERE Nome LIKE ''%' + @ValorFiltro + '%'''
+			WHEN 'Codigo' THEN ' WHERE Codigo LIKE ''%' + @ValorFiltro + '%'''
+		END
+	END 
+	
+	EXEC (@Comm)	
+
+END
+-------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+CREATE PROC p_AtualizarDadosForo
+@Codigo CHAR(4),
+@Nome VARCHAR(100),
+@CodigoAntigo CHAR(4),
+@NomeNovo VARCHAR(100),
+@retorno INT OUTPUT
+
+AS
+BEGIN
+	
+	UPDATE TBL_FORO
+	SET Codigo = @Codigo,
+	    Nome = @Nome
+	FROM TBL_FORO
+	WHERE Codigo = @CodigoAntigo
+	AND Nome = @NomeNovo	
+		
+	IF @@ROWCOUNT > 0
+		SET @retorno = 1
+	ELSE
+		SET @retorno = 0
+
+	
+	RETURN @retorno 
+		
+END		
+
+--------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+ALTER PROC p_ConsultarAdvogados
+@Filtro VARCHAR(10) = NULL,
+@ValorFiltro VARCHAR (50) = NULL
+
+AS
+BEGIN
+
+SET NOCOUNT ON
+
+DECLARE @Comando VARCHAR(1000)
+	
+	SET @Comando = 
+	
+	'SELECT 
+		Id_Advogado,
+		nr_OAB,
+		Nome,
+		Escritorio,
+		Email,
+		TelFixo,
+		TelCel
+	FROM TBL_ADVOGADOS'
+	
+	IF @Filtro = 'OAB'
+		SET @Comando = @Comando + ' WHERE nr_OAB LIKE ' + '''%' + @ValorFiltro + '%''' 
+		
+	IF @Filtro = 'Nome'		
+		SET @Comando = @Comando + ' WHERE Nome LIKE ' + '''%' + @ValorFiltro + '%'''
+		
+	EXEC (@Comando)
+	
+END	
+
+---------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+CREATE PROC p_AtualizarDadosAdvogados
+@nr_OAB_param VARCHAR(6), 
+@nr_OAB VARCHAR(6),
+@Nome VARCHAR(50),
+@Escritorio VARCHAR(50),
+@Email VARCHAR(50),
+@TelFixo VARCHAR(13),
+@TelCel VARCHAR(13),
+@retorno int OUTPUT
+
+AS
+BEGIN
+	
+	UPDATE TBL_ADVOGADOS
+	SET nr_OAB = @nr_OAB,
+		Nome = @Nome,
+		Escritorio = @Escritorio,
+		Email = @Email,
+		TelFixo = @TelFixo,
+		TelCel = @TelCel
+	WHERE nr_OAB = @nr_OAB_param
+	
+	IF @@ROWCOUNT > 0
+		SET @retorno = 1
+	ELSE 
+		SET @retorno = 0
+
+	
+	RETURN @retorno
+		
+END
+
+---------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+ALTER PROC p_IncluirProcessos  
+@nr_Processo VARCHAR(30),  
+@Classe VARCHAR(100),   
+@Area VARCHAR(20), 
+@dt_Abertura DATE,   
+@Assunto VARCHAR(100),  
+@OutrosAssunto VARCHAR(100),  
+@Id_Foro INT,  
+@Controle VARCHAR(20),  
+@nm_Juiz VARCHAR(100),  
+@Id_Usuario INT,  
+@ValorAcao MONEY,  
+@ExeqteEmpresa VARCHAR(100),   
+@ExeqteAdvogado VARCHAR(100),   
+@ExectdoEmpresa VARCHAR(100),   
+@Id_exectdoAdvogado INT,  
+@DescricaoProcesso VARCHAR(1000),  
+@Status VARCHAR(50),
+@Link VARCHAR (1000),
+@retorno INT OUTPUT  
+  
+AS  
+BEGIN  
+  
+ INSERT TBL_PROCESSOS  
+ VALUES (@nr_Processo, @Classe, @Area, @dt_Abertura, @Assunto, @OutrosAssunto, @Id_Foro, @Controle, @nm_Juiz, @Id_Usuario,  
+   @ValorAcao, @ExeqteEmpresa, @ExeqteAdvogado, @ExectdoEmpresa, @Id_exectdoAdvogado, @DescricaoProcesso, @Status, @Link)  
+  
+ IF @@ROWCOUNT > 0  
+  SET @retorno = 1  
+ ELSE  
+  SET @retorno = 0    
+   
+ RETURN @retorno    
+  
+END
+
+-----------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+  
+ALTER PROC p_IncluirHistoricoProcessos  
+@Id_Processo INT,  
+@dt_InclusaoHistorico SMALLDATETIME,  
+@Id_Usuario INT,  
+@DescricaoHistorico VARCHAR(1000),  
+@dt_Movimentacao DATE,  
+@Status VARCHAR(50),  
+@retorno INT OUTPUT  
+  
+AS  
+BEGIN  
+  
+ INSERT TBL_HISTORICO_PROCESSOS  
+ VALUES (@Id_Processo, @dt_InclusaoHistorico, @Id_Usuario, @DescricaoHistorico, @dt_Movimentacao, @Status)   
+  
+ IF @@ROWCOUNT > 0  
+  SET @retorno = 1  
+ ELSE  
+  SET @retorno = 0    
+   
+ RETURN @retorno    
+  
+END 
+-------------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+CREATE PROC p_PesquisarForoProcesso
+AS
+BEGIN
+
+	SELECT 
+		ID_FORO,
+		CODIGO,
+		NOME
+	FROM TBL_FORO	
+	
+END
+
+-------------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+CREATE PROC p_PesquisarAdvogados
+AS
+BEGIN
+
+	SELECT 
+		nr_OAB, 
+		Nome
+	FROM TBL_ADVOGADOS
+	
+END	
+
+--------------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO 
+
+CREATE PROC p_RetornarIdForo
+@CodigoForo CHAR(4),
+@Nome VARCHAR(100)
+
+AS
+BEGIN
+
+	SELECT 
+		Id_Foro
+	FROM TBL_FORO
+	WHERE Codigo = @CodigoForo
+	AND Nome = @Nome
+	
+END
+
+---------------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO 
+
+CREATE PROC p_RetornarIdAdvogado
+@nr_OAB VARCHAR(6)
+
+AS
+BEGIN
+
+	SELECT 
+		Id_Advogado
+	FROM TBL_ADVOGADOS
+	WHERE nr_OAB = @nr_OAB
+	
+END
+
+----------------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO 
+
+CREATE PROC p_RetornarIdUsuario
+@Login VARCHAR(10)
+
+AS
+BEGIN
+
+	SELECT 
+		Id_Usuario
+	FROM TBL_USUARIOS
+	WHERE [Login] = @Login
+	
+END
+
+----------------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO 
+
+ALTER PROC p_RetornarProcessoExiste
+@nr_Processo VARCHAR(30)
+
+AS
+BEGIN
+DECLARE @i INT
+	
+	SELECT 
+		@i = Id_Processo
+	FROM TBL_PROCESSOS
+	WHERE nr_Processo = @nr_Processo
+	
+	IF @i > 0
+		SELECT @i
+	ELSE 
+		SELECT 0
+			
+END
+
+--------------------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO 
+
+ALTER PROC p_PesquisarProcessos   
+@Filtro VARCHAR(100),    
+@ValorFiltro VARCHAR(100)    
+
+AS    
+BEGIN    
+
+	BEGIN TRY  
+
+		DECLARE @Comando VARCHAR(1000)     
+
+		SET NOCOUNT ON    
+
+		SELECT     
+			PRO.nr_Processo,    
+			HIST.dt_Movimentacao,    
+			HIST.Status,    
+			ADV.Nome,    
+			ADV.nr_OAB,  
+			PRO.ValorAcao,    
+			PRO.Assunto,   
+			HIST.dt_InclusaoHistorico, 
+			FO.CODIGO AS Codigo_Foro,
+			FO.NOME AS Nome_Foro     
+		INTO ##tb_Processos  
+		FROM TBL_PROCESSOS PRO    
+		INNER JOIN TBL_HISTORICO_PROCESSOS  HIST    
+			ON PRO.Id_Processo = HIST.Id_Processo    
+		INNER JOIN TBL_ADVOGADOS ADV    
+			ON PRO.Id_exectdoAdvogado = ADV.Id_Advogado 
+		INNER JOIN TBL_FORO FO
+			ON FO.ID_FORO = PRO.ID_FORO     
+	 
+		SELECT DISTINCT NR_PROCESSO  
+		INTO ##tbNrProcesso   
+		FROM ##tb_Processos  
+
+		DECLARE cursor_Processo CURSOR FOR SELECT nr_Processo FROM ##tbNrProcesso  
+		 
+		DECLARE @Numero VARCHAR (100),  
+		@Tot INT,  
+		@Con INT  
+		 
+		TRUNCATE TABLE TBL_CONSULTA_PROCESSOS  
+		 
+		OPEN cursor_Processo  
+		SELECT @Tot = COUNT(*) FROM ##tbNrProcesso  
+	 
+		SET @Con = 1  
+		WHILE @Con <= @Tot  
+		BEGIN  
+			FETCH cursor_Processo INTO @Numero  
+			IF NOT exists(select * from TBL_CONSULTA_PROCESSOS Where nr_processo = @Numero)  
+			BEGIN  
+				INSERT TBL_CONSULTA_PROCESSOS  
+				SELECT  TOP 1   
+					nr_Processo,  
+					dt_Movimentacao,   
+					[Status],  
+					Nome,  
+					nr_OAB,  
+					ValorAcao,  
+					Assunto,
+					Codigo_Foro, 
+					Nome_Foro		            
+				FROM ##tb_Processos  
+				WHERE NR_PROCESSO = @Numero  
+				ORDER BY dt_movimentacao DESC, dt_inclusaoHistorico DESC  
+			END  
+			SET @Con = @Con + 1  
+		END  
+		CLOSE cursor_Processo  
+		DEALLOCATE cursor_Processo  
+
+		SET @Comando = 'SELECT 
+							nr_Processo,  
+							dt_Movimentacao,   
+							[Status],  
+							Nome,  
+							nr_OAB,  
+							ValorAcao,  
+							Assunto   
+						FROM TBL_CONSULTA_PROCESSOS'  
+
+		IF @Filtro <> '' AND @Filtro <> 'Nenhum'  
+		BEGIN    
+			SET @Comando = @Comando +    
+			CASE @Filtro     
+				WHEN 'Número Processo' THEN ' Where nr_Processo LIKE ' + '''%' + @ValorFiltro + '%'''    
+				WHEN 'Número OAB'      THEN ' Where nr_OAB LIKE ' + '''%' + @ValorFiltro + '%'''    
+				WHEN 'Nome Advogado'   THEN ' Where Nome LIKE ' + '''%' + @ValorFiltro + '%'''    
+				WHEN 'Status Processo' THEN ' Where Status LIKE ' + '''%' + @ValorFiltro + '%'''    
+				WHEN 'Valor Processo'  THEN ' Where ValorAcao LIKE ' + '''%' + @ValorFiltro + '%'''    
+				WHEN 'Código Foro'  THEN ' Where Codigo_Foro LIKE ' + '''%' + @ValorFiltro + '%'''    
+				WHEN 'Nome Foro'  THEN ' Where Nome_Foro LIKE ' + '''%' + @ValorFiltro + '%'''    
+			END    
+		END    
+		
+		DROP TABLE ##tb_Processos  
+		DROP TABLE ##tbNrProcesso  
+
+		EXEC (@Comando)   
+
+	END TRY  
+
+	BEGIN CATCH   
+
+		SELECT 'ERRO ' + ERROR_MESSAGE()  
+
+	END CATCH  
+END  
+----------------------------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+CREATE PROC p_RetornarProcessoCompleto
+@nr_Processo VARCHAR(30)
+
+AS 
+BEGIN
+
+	SELECT 
+		PRO.nr_Processo,
+		PRO.Classe,
+		PRO.Area,
+		PRO.Assunto,
+		PRO.OutrosAssuntos,
+		PRO.dt_Abertura,
+		FO.Codigo,
+		FO.Nome,
+		PRO.Controle,
+		PRO.ValorAcao,
+		PRO.nm_Juiz,
+		PRO.[Status],
+		USU.Nome AS NomeUSU,
+		PRO.ExeqteEmpresa,
+		PRO.ExeqteAdvogado,
+		PRO.ExectdoEmpresa,
+		ADV.nr_OAB,
+		ADV.Nome AS NomeADV, 
+		PRO.Link,
+		PRO.DescricaoProcesso, 
+		HIST.Id_Historico,
+		HIST.dt_Movimentacao, 
+		HIST.[Status] AS StatusHist,
+		HIST.DescricaoHistorico
+	FROM TBL_PROCESSOS PRO
+	INNER JOIN TBL_HISTORICO_PROCESSOS HIST
+		ON PRO.Id_Processo = HIST.Id_Processo
+	INNER JOIN  TBL_FORO FO
+		ON PRO.ID_FORO = FO.ID_FORO
+	INNER JOIN TBL_USUARIOS USU
+		ON PRO.Id_Usuario = USU.Id_Usuario		
+	INNER JOIN TBL_ADVOGADOS ADV
+		ON PRO.Id_exectdoAdvogado = ADV.Id_Advogado		
+	WHERE PRO.nr_Processo = @nr_Processo
+	ORDER BY HIST.dt_Movimentacao 
+	
+END	
+
+---------------------------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+CREATE PROC p_RetornarHistoricoCompleto
+@IdHist INT
+
+AS 
+BEGIN
+
+	SELECT 
+		USU.[Login],
+		HIST.dt_InclusaoHistorico, 
+		HIST.dt_Movimentacao, 
+		PRO.nr_Processo,
+		HIST.[Status],
+		HIST.DescricaoHistorico	
+	FROM TBL_HISTORICO_PROCESSOS HIST
+	INNER JOIN TBL_PROCESSOS PRO
+		ON HIST.Id_Processo = PRO.Id_Processo
+	INNER JOIN TBL_USUARIOS USU
+		ON PRO.Id_Usuario = USU.Id_Usuario	
+	WHERE HIST.Id_Historico = @IdHist
+	
+END
+
+---------------------------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+ALTER PROC p_BuscarProcessoSemAtualizacao  
+
+AS  
+BEGIN  
+
+	BEGIN TRY  
+
+		IF OBJECT_ID('tempdb..#tbProcesso') IS NOT NULL  
+			DROP TABLE #tbProcesso  
+
+		SELECT	
+			nr_Processo,
+			dt_Movimentacao,
+			[Status],
+			Nome,
+			nr_OAB,
+			ValorAcao,
+			Assunto
+		INTO #tbProcesso FROM   
+		TBL_CONSULTA_PROCESSOS  
+		WHERE 1 = 2  
+
+		INSERT #tbProcesso    
+		EXEC p_PesquisarProcessos '', ''  
+
+		SELECT  
+			tb.nr_Processo,   
+			tb.dt_Movimentacao,   
+			tb.[Status],  
+			PRO.Link  
+		FROM #tbProcesso tb  
+		INNER JOIN TBL_PROCESSOS PRO  
+			ON PRO.nr_Processo = tb.nr_Processo  
+		INNER JOIN TBL_PROCESSOS_FINALIZADOS FIN  
+			ON PRO.nr_Processo = FIN.nr_Processo  
+		WHERE dt_Movimentacao < DATEADD(DAY, -5, GETDATE())  
+		AND FIN.dt_Encerramento IS NULL  
+		ORDER BY dt_Movimentacao  
+
+	END TRY  
+
+	BEGIN CATCH  
+
+		SELECT 'ERRO'  
+
+	END CATCH  
+
+END  
+---------------------------------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+alter PROC p_FinalizarReabrirProcesso
+@Tipo CHAR(3), 
+@nr_Processo VARCHAR(30),
+@Data VARCHAR(10) = NULL
+
+AS 
+BEGIN
+	
+	BEGIN TRY
+		
+		IF @Tipo = 'Fin'
+		BEGIN
+			UPDATE TBL_PROCESSOS_FINALIZADOS
+			SET dt_Encerramento = CONVERT(DATE,@Data, 103)
+			WHERE nr_Processo = @nr_Processo
+		END
+		ELSE
+		BEGIN
+			UPDATE TBL_PROCESSOS_FINALIZADOS
+			SET dt_Encerramento = NULL
+			WHERE nr_Processo = @nr_Processo
+		END
+		
+		SELECT @@ROWCOUNT, ''
+		
+	END TRY
+	
+	BEGIN CATCH
+
+		SELECT ERROR_NUMBER(), ERROR_MESSAGE() + ' na PROC ' + ERROR_PROCEDURE();
+		
+	END CATCH
+
+END
+
+------------------------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+CREATE PROC p_CadastrarCartorio
+@Id_Foro INT,
+@Nome VARCHAR(200),
+@Logradouro VARCHAR(200),
+@Numero VARCHAR(10),
+@Bairro VARCHAR(50),
+@Cidade VARCHAR(100),
+@UF CHAR(2),
+@CEP VARCHAR(9),
+@Telefone VARCHAR(20),
+@Email VARCHAR(100),
+@Observacao VARCHAR(1000),
+@retorno INT OUTPUT
+
+AS
+BEGIN
+
+	INSERT TBL_CARTORIOS
+	VALUES (@Id_Foro, @Nome, @Logradouro, @Numero, @Bairro, @Cidade, @UF, @CEP, @Telefone, @Email, @Observacao)
+	
+	IF @@ROWCOUNT > 0 
+		SET @retorno = @@ROWCOUNT
+	ELSE 
+		SET @retorno = 0
+
+END
+
+------------------------------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+CREATE PROC p_RetornarCartoriosForos
+@Codigo CHAR(4),
+@Nome VARCHAR(100)
+
+AS 
+BEGIN
+	
+	SELECT 
+		CA.Nome
+	FROM TBL_FORO FO
+	INNER JOIN TBL_CARTORIOS CA
+	ON FO.Id_Foro = CA.Id_Foro
+	WHERE FO.Codigo = @Codigo
+	AND FO.Nome = @Nome
+
+END
+
+------------------------------------------------------------------------------------------------------------------------------
+
+USE BD_PROCESSES
+GO
+
+ALTER PROC p_PesquisarCartorios	
+@Filtro VARCHAR(20),
+@ValorFiltro VARCHAR(50)
+
+AS
+BEGIN
+	
+	DECLARE @Comando VARCHAR(1000)
+
+	set @Comando = '
+	SELECT 
+		Nome,
+		Logradouro,
+		Numero, 
+		Telefone, 
+		Email, 
+		Bairro, 
+		Cidade
+	FROM TBL_CARTORIOS'
+	
+	IF @Filtro <> '' AND @Filtro <> 'Nenhum'
+	BEGIN
+		SET @Comando = @Comando +
+		CASE @Filtro
+			WHEN 'Nome' THEN ' WHERE Nome LIKE ''%' + @ValorFiltro + '%'''
+			WHEN 'Email' THEN ' WHERE Email LIKE ''%' + @ValorFiltro + '%'''
+			WHEN 'Bairro' THEN ' WHERE Bairro LIKE ''%' + @ValorFiltro + '%'''
+			WHEN 'Cidade' THEN ' WHERE Cidade LIKE ''%' + @ValorFiltro + '%'''
+		END
+	END 
+	
+	EXEC (@Comando)
+	
+END

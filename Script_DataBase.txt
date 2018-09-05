@@ -1,0 +1,9 @@
+CREATE DATABASE BD_PROCESSES  
+ON   
+( NAME = BD_PROCESSES_Dados,  
+    FILENAME = 'C:\Users\calmeida\Documents\SQL Server Management Studio\Projects\Processes\BD_Processes.mdf')  
+LOG 
+ON  
+( NAME = BD_PROCESSES_Log,  
+    FILENAME = 'C:\Users\calmeida\Documents\SQL Server Management Studio\Projects\Processes\BD_Processes.ldf')  
+GO

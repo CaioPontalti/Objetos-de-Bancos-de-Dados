@@ -1,0 +1,33 @@
+ALTER TRIGGER tg_Inclusão_Historico
+ON TBL_PROCESSOS AFTER INSERT
+
+AS
+BEGIN
+
+SET NOCOUNT ON
+
+DECLARE @Id_Processo INT,
+		@dt_Inclusao SMALLDATETIME,
+		@Id_Usuario INT,
+		@Descricao VARCHAR(1000),
+		@dt_Movimentacao DATE,
+		@Status VARCHAR(50),
+		@nr_Processo VARCHAR(30)
+		
+		SELECT 
+			@Id_Processo = Id_Processo,
+			@dt_Inclusao = GETDATE(),
+			@Id_Usuario = Id_Usuario,
+			@Descricao = 'Inclusão do Processo no sistema.',
+			@dt_Movimentacao = dt_Abertura,
+			@Status = [Status],
+			@nr_Processo = nr_Processo
+		FROM INSERTED
+		
+		INSERT TBL_HISTORICO_PROCESSOS
+		VALUES (@Id_Processo, @dt_Inclusao, @Id_Usuario, @Descricao, @dt_Movimentacao, @Status)
+		
+		INSERT TBL_PROCESSOS_FINALIZADOS
+		VALUES (@nr_Processo, NULL)
+		
+END
